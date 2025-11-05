@@ -136,3 +136,25 @@ class FocusSessionModel(BaseModel):
         populate_by_name = True
         arbitrary_types_allowed = True
         json_encoders = {ObjectId: str}
+
+
+class DownloadModel(BaseModel):
+    """Download tracking model"""
+    id: Optional[PyObjectId] = Field(default_factory=PyObjectId, alias="_id")
+    user_id: str = "default_user"
+    filename: str
+    url: str
+    file_size: Optional[int] = None  # bytes
+    mime_type: Optional[str] = None
+    save_path: Optional[str] = None
+    status: str = "in_progress"  # in_progress, completed, failed, cancelled
+    progress: float = 0.0  # 0-100
+    downloaded_bytes: int = 0
+    started_at: datetime = Field(default_factory=datetime.utcnow)
+    completed_at: Optional[datetime] = None
+    error_message: Optional[str] = None
+
+    class Config:
+        populate_by_name = True
+        arbitrary_types_allowed = True
+        json_encoders = {ObjectId: str}
