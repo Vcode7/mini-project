@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import Browser from './components/Browser'
 import AiChat from './components/AiChat'
+import WebsiteSuggestion from './components/WebsiteSuggestion'
 import DownloadPage from './components/DownloadPage'
 import Login from './components/Login'
 import { ThemeProvider } from './context/ThemeContext'
@@ -39,6 +40,7 @@ function AppContent() {
       <div className="h-screen w-screen overflow-hidden bg-background text-foreground">
         <Browser />
         <AiChat />
+        <WebsiteSuggestion />
       </div>
     </BrowserProvider>
   )

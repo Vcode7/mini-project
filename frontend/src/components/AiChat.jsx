@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { MessageCircle, X, Send, Mic, Loader2, Volume2, VolumeX } from 'lucide-react'
 import { useBrowser } from '../context/BrowserContext'
+import { isCapacitor, isElectron } from '../utils/platform'
 import axios from 'axios'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
@@ -60,7 +61,7 @@ export default function AiChat() {
 
     window.addEventListener('aichat-query', handleAiChatQuery)
     window.addEventListener('open-ai-chat', handleOpenAiChat)
-    
+
     return () => {
       window.removeEventListener('aichat-query', handleAiChatQuery)
       window.removeEventListener('open-ai-chat', handleOpenAiChat)
@@ -97,13 +98,13 @@ export default function AiChat() {
           }
         })()
       `);
-      
+
       const parsed = JSON.parse(pageText);
       if (parsed.error) {
         console.error('Error in webview script:', parsed.error);
         return `Current page: ${activeTab?.url} (content extraction failed)`;
       }
-      
+
       const result = `Current page: ${parsed.title}\nURL: ${activeTab.url}\n${parsed.description ? 'Description: ' + parsed.description + '\n' : ''}\nContent:\n${parsed.content}`;
       console.log('Page content extracted:', result.slice(0, 200) + '...');
       return result;
@@ -125,9 +126,9 @@ export default function AiChat() {
 
     try {
       const pageContent = await getPageContent()
-      
+
       // Combine page content with additional context (e.g., selected text)
-      const contextToSend = additionalContext 
+      const contextToSend = additionalContext
         ? `${pageContent}\n\nSelected Text: ${additionalContext}`
         : pageContent
 
@@ -210,24 +211,24 @@ export default function AiChat() {
       }
 
       const audio = new Audio(`data:audio/mp3;base64,${base64Audio}`)
-      
+
       audio.onplay = () => {
         console.log('Audio started playing')
         setIsPlaying(true)
       }
-      
+
       audio.onended = () => {
         console.log('Audio ended')
         setIsPlaying(false)
         setCurrentAudio(null)
       }
-      
+
       audio.onerror = (e) => {
         console.error('Audio error:', e)
         setIsPlaying(false)
         setCurrentAudio(null)
       }
-      
+
       audio.onpause = () => {
         console.log('Audio paused')
         setIsPlaying(false)
@@ -258,7 +259,7 @@ export default function AiChat() {
       setCurrentAudio(null)
     }
   }
-  
+
   // Cleanup audio on unmount
   useEffect(() => {
     return () => {
@@ -336,7 +337,7 @@ export default function AiChat() {
     if (longPressTimerRef.current) {
       clearTimeout(longPressTimerRef.current)
       longPressTimerRef.current = null
-      
+
       // If not recording yet, it was a tap
       if (!isRecording) {
         startRecording('tap')
@@ -376,7 +377,7 @@ export default function AiChat() {
             isTranscription: true
           }
           setMessages(prev => [...prev, transcriptionMessage])
-          
+
           // Then send to AI
           setIsLoading(true)
           await handleSendMessage(response.data.message)
@@ -399,11 +400,14 @@ export default function AiChat() {
     }
   }
 
+
+
   if (!isOpen) {
     return (
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 p-4 bg-primary text-primary-foreground rounded-full shadow-lg hover:scale-110 transition-transform z-50"
+        className={`fixed p-4 bg-primary text-primary-foreground rounded-full shadow-lg hover:scale-110 transition-transform z-[100] ${isCapacitor() ? 'bottom-20 right-4' : 'bottom-6 right-6'
+          }`}
         title="Open AiChat"
       >
         <MessageCircle size={24} />
@@ -412,7 +416,8 @@ export default function AiChat() {
   }
 
   return (
-    <div className="fixed bottom-6 right-6 w-96 h-[600px] bg-background border border-border rounded-lg shadow-2xl flex flex-col z-50">
+       <div className="fixed bottom-6 right-6 w-96 bg-background border border-border rounded-lg shadow-2xl flex flex-col z-40 h-[600px]">
+
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-border bg-primary text-primary-foreground rounded-t-lg">
         <div className="flex items-center gap-2">
@@ -542,7 +547,7 @@ export default function AiChat() {
               </span>
             )}
           </div>
-          
+
           {/* Live transcription display below mic button */}
           {transcribingText && (
             <div className="flex items-center gap-2 px-3 py-2 bg-secondary/50 rounded-lg border border-border">
@@ -551,6 +556,7 @@ export default function AiChat() {
             </div>
           )}
         </div>
+
       </div>
     </div>
   )

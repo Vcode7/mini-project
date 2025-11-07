@@ -104,7 +104,7 @@ export default function FocusMode({ onUrlCheck }) {
     return (
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-24 right-6 p-4 bg-purple-600 text-white rounded-full shadow-lg hover:scale-110 transition-transform z-40"
+        className="fixed bottom-48 right-4 p-4 mb-4 bg-purple-600 text-white rounded-full shadow-lg hover:scale-110 z-100"
         title="Focus Mode"
       >
         <Target size={24} />

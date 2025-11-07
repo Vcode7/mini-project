@@ -75,3 +75,24 @@
 ::-webkit-scrollbar-thumb:hover {
   @apply bg-foreground;
 }
+
+/* Mobile safe area support */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Prevent text selection on resize handles */
+.cursor-nwse-resize,
+.cursor-ew-resize,
+.cursor-ns-resize {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Line clamp utility */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}

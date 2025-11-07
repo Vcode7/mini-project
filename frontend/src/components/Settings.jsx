@@ -60,6 +60,10 @@ export default function Settings({ isOpen, onClose }) {
       const response = await axios.put(`${API_URL}/api/data/settings`, settings)
       if (response.data.success) {
         alert('Settings saved successfully!')
+        // Emit event to notify other components that settings were updated
+        window.dispatchEvent(new CustomEvent('settings-updated', {
+          detail: settings
+        }))
       }
     } catch (error) {
       console.error('Error saving settings:', error)

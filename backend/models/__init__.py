@@ -39,6 +39,7 @@ class AIResponse(BaseModel):
     text: str
     audio_url: Optional[str] = None
     audio_base64: Optional[str] = None
+    suggested_websites: Optional[List[Dict[str, str]]] = Field(default_factory=list, description="Suggested websites for learning")
 
 class SummarizeRequest(BaseModel):
     """Page summarization request"""

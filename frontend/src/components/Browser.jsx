@@ -29,6 +29,7 @@ import FocusBlockedPage from './FocusBlockedPage'
 import Settings from './Settings'
 import Downloads from './Downloads'
 import HighlightImportant from './HighlightImportant'
+import MobileBottomBar from './MobileBottomBar'
 import axios from 'axios'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
@@ -90,21 +91,49 @@ export default function Browser() {
         addTab(url)
       })
     }
-  }, [])
 
-  useEffect(() => {
-    // Load search engine preference
-    const loadSettings = async () => {
-      try {
-        const response = await axios.get(`${API_URL}/api/data/settings`)
-        if (response.data.success) {
-          setSearchEngine(response.data.settings.default_search_engine || 'google')
-        }
-      } catch (error) {
-        console.error('Error loading settings:', error)
+    // Listen for navigate-to-url event from AI chat
+    const handleNavigateToUrl = (event) => {
+      const { url } = event.detail
+      if (url) {
+        updateTabUrl(activeTabId, url)
       }
     }
+
+    window.addEventListener('navigate-to-url', handleNavigateToUrl)
+
+    return () => {
+      window.removeEventListener('navigate-to-url', handleNavigateToUrl)
+    }
+  }, [activeTabId, updateTabUrl, addTab])
+
+  // Load settings function (defined outside useEffect so it can be called from multiple places)
+  const loadSettings = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/api/data/settings`)
+      if (response.data.success) {
+        setSearchEngine(response.data.settings.default_search_engine || 'google')
+      }
+    } catch (error) {
+      console.error('Error loading settings:', error)
+    }
+  }
+
+  useEffect(() => {
+    // Load search engine preference on mount
     loadSettings()
+
+    // Listen for settings updates from Settings component
+    const handleSettingsUpdate = () => {
+      console.log('Settings updated, reloading...')
+      loadSettings()
+    }
+
+    window.addEventListener('settings-updated', handleSettingsUpdate)
+
+    return () => {
+      window.removeEventListener('settings-updated', handleSettingsUpdate)
+    }
   }, [])
 
   const getSearchUrl = (query) => {
@@ -305,6 +334,7 @@ export default function Browser() {
 
       {/* Navigation Bar */}
       <div className="flex items-center gap-2 px-3 py-2 bg-background border-b border-border">
+        {/* Navigation Buttons - Always visible */}
         <div className="flex items-center gap-1">
           <button
             onClick={navigateBack}
@@ -329,9 +359,10 @@ export default function Browser() {
           >
             <RefreshCw size={18} />
           </button>
+          {/* Home button - hidden on mobile, shown on desktop */}
           <button
             onClick={handleHome}
-            className="p-2 hover:bg-secondary rounded"
+            className="p-2 hover:bg-secondary rounded hidden md:block"
             title="Home"
           >
             <Home size={18} />
@@ -346,22 +377,25 @@ export default function Browser() {
             onChange={(e) => setUrlInput(e.target.value)}
             onFocus={(e) => e.target.select()}
             placeholder="Enter URL or search..."
-            className="w-full px-4 py-2 bg-secondary rounded-full border border-border focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full px-3 py-2 md:px-4 text-sm md:text-base bg-secondary rounded-full border border-border focus:outline-none focus:ring-2 focus:ring-primary"
           />
         </form>
 
-        <div className="flex items-center gap-1">
+        {/* Theme Toggle - Always visible */}
+        <button
+          onClick={toggleTheme}
+          className="p-2 hover:bg-secondary rounded"
+          title="Toggle Theme"
+        >
+          {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
+        </button>
+
+        {/* Desktop Actions - Hidden on mobile */}
+        <div className="hidden md:flex items-center gap-1">
           <VoiceRecorder
             isActive={isVoiceActive}
             onToggle={() => setIsVoiceActive(!isVoiceActive)}
           />
-          <button
-            onClick={toggleTheme}
-            className="p-2 hover:bg-secondary rounded"
-            title="Toggle Theme"
-          >
-            {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
-          </button>
           <button
             onClick={() => setIsDownloadsOpen(true)}
             className="p-2 hover:bg-secondary rounded"
@@ -481,7 +515,14 @@ export default function Browser() {
       <FocusMode onUrlCheck={handleFocusModeChange} />
 
       {/* Settings Modal */}
-      <Settings isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+      <Settings 
+        isOpen={isSettingsOpen} 
+        onClose={() => {
+          setIsSettingsOpen(false)
+          // Reload settings when modal closes to ensure we have latest values
+          loadSettings()
+        }} 
+      />
 
       {/* Downloads Modal */}
       <Downloads isOpen={isDownloadsOpen} onClose={() => setIsDownloadsOpen(false)} />
@@ -492,6 +533,18 @@ export default function Browser() {
         onClose={() => setIsHighlightOpen(false)}
         activeWebview={webviewRef.current}
       />
+
+      {/* Mobile Bottom Bar - Only show on Capacitor */}
+      {!isElectron() && (
+        <MobileBottomBar
+          onHomeClick={handleHome}
+          onHighlightClick={() => setIsHighlightOpen(true)}
+          onVoiceClick={() => setIsVoiceActive(!isVoiceActive)}
+          onSettingsClick={() => setIsSettingsOpen(true)}
+          onDownloadsClick={() => setIsDownloadsOpen(true)}
+          isVoiceActive={isVoiceActive}
+        />
+      )}
     </div>
   )
 }

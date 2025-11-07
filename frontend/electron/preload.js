@@ -30,5 +30,10 @@ contextBridge.exposeInMainWorld('electron', {
     if (validChannels.includes(channel)) {
       ipcRenderer.once(channel, (event, ...args) => func(...args))
     }
-  }
+  },
+  // Extension management
+  getExtensions: () => ipcRenderer.invoke('get-extensions'),
+  installExtension: () => ipcRenderer.invoke('install-extension'),
+  removeExtension: (extensionId) => ipcRenderer.invoke('remove-extension', extensionId),
+  toggleExtension: (extensionId, enabled) => ipcRenderer.invoke('toggle-extension', extensionId, enabled)
 })

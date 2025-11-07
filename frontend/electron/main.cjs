@@ -1,9 +1,13 @@
-const { app, BrowserWindow, session, ipcMain } = require('electron')
+const { app, BrowserWindow, session, ipcMain, dialog } = require('electron')
 const path = require('path')
+const fs = require('fs')
 const axios = require('axios')
 
 let windows = []
 const API_URL = 'http://localhost:8000'
+
+// Store loaded extensions
+const loadedExtensions = new Map()
 
 // Disable hardware acceleration to prevent black screen issues
 app.disableHardwareAcceleration()
@@ -233,4 +237,124 @@ app.whenReady().then(() => {
       console.error('Error tracking download:', error)
     }
   })
+})
+
+// Extension Management IPC Handlers
+ipcMain.handle('get-extensions', async () => {
+  try {
+    const extensions = []
+    for (const [id, ext] of loadedExtensions.entries()) {
+      extensions.push({
+        id: id,
+        name: ext.name || 'Unknown Extension',
+        version: ext.version || '1.0.0',
+        description: ext.description || '',
+        enabled: ext.enabled !== false,
+        icon: ext.icon || null,
+        permissions: ext.permissions || []
+      })
+    }
+    return extensions
+  } catch (error) {
+    console.error('Error getting extensions:', error)
+    return []
+  }
+})
+
+ipcMain.handle('install-extension', async () => {
+  try {
+    // Open dialog to select extension folder
+    const result = await dialog.showOpenDialog({
+      title: 'Select Extension Folder',
+      properties: ['openDirectory'],
+      message: 'Select an unpacked Chrome extension folder'
+    })
+
+    if (result.canceled || !result.filePaths || result.filePaths.length === 0) {
+      return { success: false, error: 'Installation cancelled' }
+    }
+
+    const extensionPath = result.filePaths[0]
+
+    // Read manifest.json
+    const manifestPath = path.join(extensionPath, 'manifest.json')
+    if (!fs.existsSync(manifestPath)) {
+      return { success: false, error: 'Invalid extension: manifest.json not found' }
+    }
+
+    const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'))
+    
+    // Load the extension
+    try {
+      const extensionId = await session.defaultSession.loadExtension(extensionPath, {
+        allowFileAccess: true
+      })
+      
+      // Store extension info
+      loadedExtensions.set(extensionId, {
+        id: extensionId,
+        name: manifest.name,
+        version: manifest.version,
+        description: manifest.description || '',
+        path: extensionPath,
+        enabled: true,
+        icon: manifest.icons ? manifest.icons['128'] || manifest.icons['48'] || manifest.icons['16'] : null,
+        permissions: manifest.permissions || []
+      })
+
+      console.log('Extension loaded:', manifest.name, 'ID:', extensionId)
+      return { success: true, extensionId }
+    } catch (err) {
+      console.error('Error loading extension:', err)
+      return { success: false, error: err.message }
+    }
+  } catch (error) {
+    console.error('Error installing extension:', error)
+    return { success: false, error: error.message }
+  }
+})
+
+ipcMain.handle('remove-extension', async (event, extensionId) => {
+  try {
+    if (!loadedExtensions.has(extensionId)) {
+      return { success: false, error: 'Extension not found' }
+    }
+
+    // Remove the extension
+    await session.defaultSession.removeExtension(extensionId)
+    loadedExtensions.delete(extensionId)
+
+    console.log('Extension removed:', extensionId)
+    return { success: true }
+  } catch (error) {
+    console.error('Error removing extension:', error)
+    return { success: false, error: error.message }
+  }
+})
+
+ipcMain.handle('toggle-extension', async (event, extensionId, enabled) => {
+  try {
+    const ext = loadedExtensions.get(extensionId)
+    if (!ext) {
+      return { success: false, error: 'Extension not found' }
+    }
+
+    if (enabled) {
+      // Re-enable by reloading
+      await session.defaultSession.loadExtension(ext.path, {
+        allowFileAccess: true
+      })
+      ext.enabled = true
+    } else {
+      // Disable by removing
+      await session.defaultSession.removeExtension(extensionId)
+      ext.enabled = false
+    }
+
+    console.log('Extension toggled:', extensionId, enabled)
+    return { success: true }
+  } catch (error) {
+    console.error('Error toggling extension:', error)
+    return { success: false, error: error.message }
+  }
 })

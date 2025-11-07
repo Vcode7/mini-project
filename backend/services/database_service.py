@@ -67,6 +67,7 @@ class DatabaseService:
     
     async def add_history(self, history: HistoryModel) -> str:
         """Add or update browsing history"""
+        self.ensure_db()
         # Check if URL already exists for user
         existing = await self.db.history.find_one({
             "user_id": history.user_id,
@@ -186,6 +187,7 @@ class DatabaseService:
     
     async def update_focus_session_stats(self, session_id: str, allowed: bool) -> bool:
         """Update focus session statistics"""
+        self.ensure_db()
         from bson import ObjectId
         
         update = {
@@ -205,6 +207,7 @@ class DatabaseService:
     
     async def end_focus_session(self, session_id: str) -> bool:
         """End a focus mode session"""
+        self.ensure_db()
         from bson import ObjectId
         
         result = await self.db.focus_sessions.update_one(
