@@ -70,7 +70,7 @@ export default function WebsiteSuggestion() {
       <button
         onClick={() => setIsOpen(true)}
         className={`fixed p-4 bg-blue-600 text-white rounded-full shadow-lg hover:scale-110 transition-transform z-100 ${
-          isElectron() ? 'bottom-36 right-4' : 'bottom-24 right-6'
+          isElectron() ? 'bottom-36 right-4' : 'bottom-36 right-4'
         }`}
         title="Website Suggestions"
       >

@@ -416,7 +416,7 @@ export default function AiChat() {
   }
 
   return (
-       <div className="fixed bottom-6 right-6 w-96 bg-background border border-border rounded-lg shadow-2xl flex flex-col z-40 h-[600px]">
+       <div className="fixed bottom-6 right-6 w-72 sm:w-96 bg-background border border-border rounded-lg shadow-2xl flex flex-col z-40 h-[600px]">
 
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-border bg-primary text-primary-foreground rounded-t-lg">

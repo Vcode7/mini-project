@@ -43,7 +43,13 @@ function VoiceNavigationMode({ isActive, onClose, onNavigate }) {
       if (recordingTimerRef.current) {
         clearInterval(recordingTimerRef.current);
       }
-      synthRef.current.cancel();
+      if (synthRef.current) {
+        try {
+          synthRef.current.cancel();
+        } catch (e) {
+          console.warn('[VoiceNav] Could not cancel speech on cleanup:', e);
+        }
+      }
     };
   }, [isActive]);
 
@@ -215,8 +221,19 @@ function VoiceNavigationMode({ isActive, onClose, onNavigate }) {
   const speak = (text) => {
     if (isMuted) return;
 
+    // Check if speech synthesis is available
+    if (!synthRef.current) {
+      console.warn('[VoiceNav] Speech synthesis not available');
+      setAiResponse(text);
+      return;
+    }
+
     // Cancel any ongoing speech
-    synthRef.current.cancel();
+    try {
+      synthRef.current.cancel();
+    } catch (e) {
+      console.warn('[VoiceNav] Could not cancel speech:', e);
+    }
 
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.rate = 1.0;
@@ -244,7 +261,12 @@ function VoiceNavigationMode({ isActive, onClose, onNavigate }) {
       setIsSpeaking(false);
     };
 
-    synthRef.current.speak(utterance);
+    try {
+      synthRef.current.speak(utterance);
+    } catch (e) {
+      console.error('[VoiceNav] Could not speak:', e);
+      setIsSpeaking(false);
+    }
   };
 
   // Handle voice command
@@ -312,8 +334,12 @@ function VoiceNavigationMode({ isActive, onClose, onNavigate }) {
   // Toggle mute
   const toggleMute = () => {
     setIsMuted(!isMuted);
-    if (!isMuted) {
-      synthRef.current.cancel();
+    if (!isMuted && synthRef.current) {
+      try {
+        synthRef.current.cancel();
+      } catch (e) {
+        console.warn('[VoiceNav] Could not cancel speech on mute:', e);
+      }
       setIsSpeaking(false);
     }
   };
