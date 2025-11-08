@@ -1,0 +1,26 @@
+IMPORTANT: Add these permissions to android/app/src/main/AndroidManifest.xml
+
+Add inside <manifest> tag (before <application>):
+
+<!-- Camera access -->
+<uses-permission android:name="android.permission.CAMERA" />
+
+<!-- Microphone access -->
+<uses-permission android:name="android.permission.RECORD_AUDIO" />
+<uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+
+<!-- Location access -->
+<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
+<!-- Storage for downloads -->
+<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+
+Then run:
+1. npm run build
+2. npx cap sync
+3. npx cap open android
+4. Run on device
+
+All websites will work now (Google, YouTube, Facebook, etc.)!

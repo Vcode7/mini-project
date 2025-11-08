@@ -1,0 +1,65 @@
+NATIVE WEBVIEW SETUP - QUICK REFERENCE
+
+STEP 1: Open Android Studio
+=============================
+cd frontend
+npx cap open android
+
+
+STEP 2: Create Plugin File
+===========================
+Location: app/src/main/java/com/aichat/browser/
+File: EmbeddedWebViewPlugin.java
+
+Right-click on 'browser' folder → New → Java Class
+Name: EmbeddedWebViewPlugin
+Copy code from: CREATE_NATIVE_PLUGIN_STEPS.md
+
+
+STEP 3: Update MainActivity
+============================
+Location: app/src/main/java/com/aichat/browser/MainActivity.java
+
+Add this line in onCreate():
+registerPlugin(EmbeddedWebViewPlugin.class);
+
+
+STEP 4: Add Permissions
+========================
+Location: app/src/main/AndroidManifest.xml
+
+Add before <application>:
+<uses-permission android:name="android.permission.INTERNET" />
+<uses-permission android:name="android.permission.CAMERA" />
+<uses-permission android:name="android.permission.RECORD_AUDIO" />
+<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
+
+STEP 5: Sync and Build
+=======================
+In Android Studio:
+File → Sync Project with Gradle Files
+
+In Terminal:
+cd frontend
+npm run build
+npx cap sync
+
+
+STEP 6: Run
+===========
+Click green play button in Android Studio
+
+
+RESULT
+======
+✅ Google works
+✅ YouTube works  
+✅ Facebook works
+✅ ALL websites work
+✅ Browser UI works
+✅ No iframe restrictions!
+
+
+Full guide: SETUP_NATIVE_WEBVIEW.md

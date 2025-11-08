@@ -1,112 +1,103 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useState } from 'react';
+import EmbeddedWebView from '../plugins/EmbeddedWebView';
 
 /**
- * Capacitor WebView component using native webview
- * This provides better performance and capabilities than iframe
+ * Capacitor WebView component using native Android WebView
  */
 function CapacitorWebView({ url, tabId, onNavigate, className, style }) {
-  const containerRef = useRef(null);
-  const webviewRef = useRef(null);
+  const [currentUrl, setCurrentUrl] = useState(url);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isCreated, setIsCreated] = useState(false);
 
+  // ⚡ 1️⃣ Create the WebView on mount (but do NOT show immediately)
   useEffect(() => {
-    if (!containerRef.current || !url) return;
-
-    // Create native webview element
-    const webview = document.createElement('webview');
-    webview.className = className || '';
-    
-    // Apply styles
-    if (style) {
-      Object.assign(webview.style, style);
-    } else {
-      webview.style.width = '100%';
-      webview.style.height = '100%';
-    }
-
-    // Set webview attributes for Capacitor
-    webview.setAttribute('allowpopups', 'true');
-    webview.setAttribute('partition', 'persist:webview');
-    webview.setAttribute('webpreferences', 'allowRunningInsecureContent, javascript=yes');
-    
-    // Add webview to container
-    containerRef.current.innerHTML = '';
-    containerRef.current.appendChild(webview);
-    webviewRef.current = webview;
-
-    // Set src after adding to DOM for better compatibility
-    webview.src = url;
-
-    // Webview event listeners - using standard webview events
-    const handleLoadStart = () => {
-      console.log('WebView load started:', url);
-    };
-
-    const handleLoadStop = () => {
-      console.log('WebView load completed:', url);
-    };
-
-    const handleLoadError = (e) => {
-      console.error('WebView load error:', e);
-    };
-
-    const handleDidNavigate = (e) => {
-      const newUrl = e.url || webview.src;
-      console.log('WebView navigated to:', newUrl);
-      if (onNavigate && newUrl && newUrl !== url) {
-        onNavigate(tabId, newUrl);
+    const initWebView = async () => {
+      try {
+        console.log('[CapacitorWebView] Creating native WebView...');
+        await EmbeddedWebView.create();
+        setIsCreated(true);
+        console.log('[CapacitorWebView] Native WebView created successfully');
+      } catch (error) {
+        console.error('[CapacitorWebView] Error creating WebView:', error);
       }
     };
 
-    const handleDidNavigateInPage = (e) => {
-      if (e.isMainFrame && onNavigate && e.url && e.url !== url) {
-        console.log('WebView in-page navigation:', e.url);
-        onNavigate(tabId, e.url);
+    initWebView();
+
+    // Setup listeners
+    const navigationCompleteListener = EmbeddedWebView.addListener?.('navigationComplete', (data) => {
+      console.log('[CapacitorWebView] Navigation complete:', data.url);
+      setIsLoading(false);
+      if (onNavigate && data.url && data.url !== currentUrl) {
+        setCurrentUrl(data.url);
+        onNavigate(tabId, data.url);
       }
-    };
+    });
 
-    // Wait for webview to be ready before adding event listeners
-    const setupListeners = () => {
-      webview.addEventListener('loadstart', handleLoadStart);
-      webview.addEventListener('loadstop', handleLoadStop);
-      webview.addEventListener('loaderror', handleLoadError);
-      webview.addEventListener('did-navigate', handleDidNavigate);
-      webview.addEventListener('did-navigate-in-page', handleDidNavigateInPage);
-    };
+    const navigationStartedListener = EmbeddedWebView.addListener?.('navigationStarted', (data) => {
+      console.log('[CapacitorWebView] Navigation started:', data.url);
+      setIsLoading(true);
+    });
 
-    // Setup listeners after a short delay to ensure webview is initialized
-    setTimeout(setupListeners, 100);
+    const loadProgressListener = EmbeddedWebView.addListener?.('loadProgress', (data) => {
+      console.log('[CapacitorWebView] Load progress:', data.progress);
+    });
 
     return () => {
-      if (webview) {
-        webview.removeEventListener('loadstart', handleLoadStart);
-        webview.removeEventListener('loadstop', handleLoadStop);
-        webview.removeEventListener('loaderror', handleLoadError);
-        webview.removeEventListener('did-navigate', handleDidNavigate);
-        webview.removeEventListener('did-navigate-in-page', handleDidNavigateInPage);
-      }
-      if (containerRef.current) {
-        containerRef.current.innerHTML = '';
+      // Cleanup listeners
+      navigationCompleteListener?.remove?.();
+      navigationStartedListener?.remove?.();
+      loadProgressListener?.remove?.();
+      EmbeddedWebView.destroy().catch(err => {
+        console.error('[CapacitorWebView] Error destroying WebView:', err);
+      });
+    };
+  }, []);
+
+  // ⚡ 2️⃣ Load URL only *after* creation, then show WebView
+  useEffect(() => {
+    const load = async () => {
+      if (!isCreated || !url) return;
+
+      try {
+        console.log('[CapacitorWebView] Loading URL:', url);
+        setCurrentUrl(url);
+        setIsLoading(true);
+
+        // ⚡ Load first
+        await EmbeddedWebView.loadUrl({ url });
+
+        // ⚡ Then show the WebView after the URL starts loading
+        await EmbeddedWebView.show();
+      } catch (err) {
+        console.error('[CapacitorWebView] Error loading URL:', err);
+        setIsLoading(false);
       }
     };
-  }, [url, tabId, onNavigate]);
 
-  // Update webview src when URL changes
-  useEffect(() => {
-    if (webviewRef.current && url) {
-      const currentSrc = webviewRef.current.getAttribute('src');
-      if (currentSrc !== url) {
-        console.log('Updating webview URL to:', url);
-        webviewRef.current.src = url;
-      }
-    }
-  }, [url]);
+    load();
+  }, [url, isCreated]);
+
+  // ⚡ 3️⃣ (Optional but recommended) Add small delay before load to ensure UI thread ready
+  // You can wrap the above load call in setTimeout(() => load(), 300)
 
   return (
-    <div 
-      ref={containerRef} 
+    <div
       className={className}
-      style={style || { width: '100%', height: '100%' }}
-    />
+      style={style || { width: '100%', height: '100%', position: 'relative' }}
+    >
+      {isLoading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-background z-10">
+          <div className="flex flex-col items-center gap-3">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            <p className="text-sm text-muted-foreground">Loading website...</p>
+            <p className="text-xs text-muted-foreground">{currentUrl}</p>
+          </div>
+        </div>
+      )}
+      {/* Native WebView rendered by Android plugin */}
+      <div className="w-full h-full" id="native-webview-container" />
+    </div>
   );
 }
 

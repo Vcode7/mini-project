@@ -10,12 +10,13 @@ const config: CapacitorConfig = {
     // For development, point to your dev server
     // url: 'http://192.168.1.100:5173',
     // cleartext: true
+  allowNavigation: ['*'],
   },
   android: {
     allowMixedContent: true,
     captureInput: true,
-    webContentsDebuggingEnabled: true
-    // Native webview will be used via the CapacitorWebView component
+    webContentsDebuggingEnabled: true,
+    backgroundColor: '#ffffff'
   },
   ios: {
     contentInset: 'automatic',
@@ -35,6 +36,9 @@ const config: CapacitorConfig = {
       resize: 'body',
       style: 'dark',
       resizeOnFullScreen: true
+    },
+    EmbeddedWebView: {
+      // Custom native WebView plugin
     }
   }
 };
