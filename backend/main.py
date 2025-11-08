@@ -8,7 +8,7 @@ from fastapi.responses import JSONResponse
 import logging
 
 from database.mongodb import connect_to_mongo, close_mongo_connection
-from routes import ai, voice, browser, proxy, data, focus, auth, downloads
+from routes import ai, voice, browser, proxy, data, focus, auth, downloads, voice_navigation
 
 # Load environment variables
 
@@ -51,6 +51,7 @@ app.add_middleware(
 app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
 app.include_router(ai.router, prefix="/api/ai", tags=["AI Assistant"])
 app.include_router(voice.router, prefix="/api/voice", tags=["Voice Commands"])
+app.include_router(voice_navigation.router, prefix="/api/ai", tags=["Voice Navigation"])
 app.include_router(browser.router, prefix="/api/browser", tags=["Browser Control"])
 app.include_router(proxy.router, prefix="/api/proxy", tags=["Proxy"])
 app.include_router(data.router, prefix="/api/data", tags=["Data Management"])

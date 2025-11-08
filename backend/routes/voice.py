@@ -40,6 +40,9 @@ async def process_voice_command(request: VoiceCommandRequest):
         # Parse command
         parsed_command = await groq_client.parse_command(transcribed_text)
         
+        # Add transcript to response
+        parsed_command['transcript'] = transcribed_text
+        
         return CommandResponse(**parsed_command)
         
     except Exception as e:

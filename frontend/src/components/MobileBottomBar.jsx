@@ -1,4 +1,4 @@
-import { Home, Highlighter, Mic, Settings as SettingsIcon, Download } from 'lucide-react'
+import { Home, Highlighter, Mic, Settings as SettingsIcon, Download, Radio } from 'lucide-react'
 import { useState } from 'react'
 
 export default function MobileBottomBar({ 
@@ -7,6 +7,7 @@ export default function MobileBottomBar({
   onVoiceClick, 
   onSettingsClick, 
   onDownloadsClick,
+  onVoiceNavClick,
   isVoiceActive 
 }) {
   const [activeTab, setActiveTab] = useState('home')
@@ -46,17 +47,12 @@ export default function MobileBottomBar({
         </button>
 
         <button
-          onClick={() => handleClick('voice', onVoiceClick)}
-          className={`${buttonClass('voice')} ${isVoiceActive ? 'text-destructive' : ''}`}
-          title="Voice"
+          onClick={() => handleClick('voicenav', onVoiceNavClick)}
+          className={`${buttonClass('voicenav')} text-primary`}
+          title="Voice Nav"
         >
-          <div className="relative">
-            <Mic size={24} />
-            {isVoiceActive && (
-              <span className="absolute -top-1 -right-1 w-2 h-2 bg-destructive rounded-full animate-pulse" />
-            )}
-          </div>
-          <span className="text-xs mt-1">Voice</span>
+          <Radio size={24} />
+          <span className="text-xs mt-1">Voice Nav</span>
         </button>
 
         <button

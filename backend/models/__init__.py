@@ -27,6 +27,7 @@ class CommandResponse(BaseModel):
     data: Optional[Dict[str, Any]] = None
     message: str
     is_aichat_query: bool = False
+    transcript: Optional[str] = Field(None, description="Transcribed text from audio")
 
 class AIRequest(BaseModel):
     """AI assistant request"""

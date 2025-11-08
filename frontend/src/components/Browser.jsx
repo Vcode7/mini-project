@@ -21,6 +21,7 @@ import {
   Highlighter
 } from 'lucide-react'
 import VoiceRecorder from './VoiceRecorder'
+import VoiceNavigationMode from './VoiceNavigationMode'
 import CapacitorWebView from './CapacitorWebView'
 import ElectronWebView from './ElectronWebView'
 import HomePage from './HomePage'
@@ -66,6 +67,7 @@ export default function Browser() {
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [isDownloadsOpen, setIsDownloadsOpen] = useState(false)
   const [isHighlightOpen, setIsHighlightOpen] = useState(false)
+  const [isVoiceNavActive, setIsVoiceNavActive] = useState(false)
   const webviewRef = useRef(null)
 
   useEffect(() => {
@@ -392,6 +394,14 @@ export default function Browser() {
 
         {/* Desktop Actions - Hidden on mobile */}
         <div className="hidden md:flex items-center gap-1">
+          <button
+            onClick={() => setIsVoiceNavActive(true)}
+            className="p-2 hover:bg-secondary rounded flex items-center gap-2 bg-primary/10 border border-primary"
+            title="Voice Navigation Mode"
+          >
+            <Mic size={18} className="text-primary" />
+            <span className="text-xs font-medium text-primary">Voice Nav</span>
+          </button>
           <VoiceRecorder
             isActive={isVoiceActive}
             onToggle={() => setIsVoiceActive(!isVoiceActive)}
@@ -534,6 +544,16 @@ export default function Browser() {
         activeWebview={webviewRef.current}
       />
 
+      {/* Voice Navigation Mode */}
+      <VoiceNavigationMode
+        isActive={isVoiceNavActive}
+        onClose={() => setIsVoiceNavActive(false)}
+        onNavigate={(url) => {
+          updateTabUrl(activeTabId, url)
+          setUrlInput(url)
+        }}
+      />
+
       {/* Mobile Bottom Bar - Only show on Capacitor */}
       {!isElectron() && (
         <MobileBottomBar
@@ -542,6 +562,7 @@ export default function Browser() {
           onVoiceClick={() => setIsVoiceActive(!isVoiceActive)}
           onSettingsClick={() => setIsSettingsOpen(true)}
           onDownloadsClick={() => setIsDownloadsOpen(true)}
+          onVoiceNavClick={() => setIsVoiceNavActive(true)}
           isVoiceActive={isVoiceActive}
         />
       )}

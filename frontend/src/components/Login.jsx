@@ -35,6 +35,7 @@ export default function Login({ onLogin }) {
         localStorage.setItem('user_name', response.data.name)
         
         // Call onLogin callback
+        
         onLogin({
           user_id: response.data.user_id,
           email: response.data.email,
